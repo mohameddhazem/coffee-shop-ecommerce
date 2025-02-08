@@ -19,6 +19,7 @@ const generateToken = (id, isAdmin) => {
 }
 const verifyToken = (req, res, next) => {
     const token = req.cookies.authToken
+    console.log(token);
     if (!token)
         return res.status(401).send('unauthorized')
     jwt.verify(token, secret_key, (err, details) => {
@@ -144,6 +145,87 @@ server.get('/products/:id', (req, res) => {
     });
 });
 
+// Add item to cart
+server.post('/cart', verifyToken, (req, res) => {
+    const { productId, quantity } = req.body;
+    const userId = req.userDetails.id;
+    console.log(productId);
+    console.log(quantity);
+    console.log(userId);
+    console.log(req.body);
+
+    // Check if the product already exists in the cart
+    const checkQuery = `SELECT * FROM CART WHERE USER_ID = ? AND PRODUCT_ID = ?`;
+    db.get(checkQuery, [userId, productId], (err, row) => {
+        if (err)
+            return res.status(500).send('Error checking cart: ' + err.message);
+
+        if (row) {
+            // Update quantity if the product already exists
+            const updateQuery = `UPDATE CART SET QUANTITY = QUANTITY + ? WHERE USER_ID = ? AND PRODUCT_ID = ?`;
+            db.run(updateQuery, [quantity, userId, productId], function (err) {
+                if (err)
+                    return res.status(500).send('Error updating cart: ' + err.message);
+                return res.status(200).send('Cart updated successfully.');
+            });
+        } else {
+            // Add new product to the cart
+            const insertQuery = `INSERT INTO CART (USER_ID, PRODUCT_ID, QUANTITY) VALUES (?, ?, ?)`;
+            db.run(insertQuery, [userId, productId, quantity], function (err) {
+                if (err)
+                    return res.status(500).send('Error adding to cart: ' + err.message);
+                return res.status(201).send('Product added to cart successfully.');
+            });
+        }
+    });
+});
+
+// Update cart item quantity
+server.put('/cart/:id', verifyToken, (req, res) => {
+    const cartId = req.params.id;
+    const { quantity } = req.body;
+
+    const updateQuery = `UPDATE CART SET QUANTITY = ? WHERE ID = ?`;
+    db.run(updateQuery, [quantity, cartId], function (err) {
+        if (err)
+            return res.status(500).send('Error updating cart: ' + err.message);
+        if (this.changes === 0)
+            return res.status(404).send('Cart item not found.');
+        res.status(200).send('Cart item updated successfully.');
+    });
+});
+
+// Remove item from cart
+server.delete('/cart/:id', verifyToken, (req, res) => {
+    const cartId = req.params.id;
+
+    const deleteQuery = `DELETE FROM CART WHERE ID = ?`;
+    db.run(deleteQuery, [cartId], function (err) {
+        if (err)
+            return res.status(500).send('Error deleting cart item: ' + err.message);
+        if (this.changes === 0)
+            return res.status(404).send('Cart item not found.');
+        res.status(200).send('Cart item deleted successfully.');
+    });
+});
+
+// View all items in the cart
+server.get('/cart', verifyToken, (req, res) => {
+    const userId = req.userDetails.id;
+
+    const selectQuery = `
+        SELECT CART.ID, PRODUCT.NAME, PRODUCT.PRICE, CART.QUANTITY, (PRODUCT.PRICE * CART.QUANTITY) AS TOTAL_PRICE
+        FROM CART
+        JOIN PRODUCT ON CART.PRODUCT_ID = PRODUCT.ID
+        WHERE CART.USER_ID = ?
+    `;
+    db.all(selectQuery, [userId], (err, rows) => {
+        if (err)
+            return res.status(500).send('Error fetching cart items: ' + err.message);
+        res.status(200).json(rows);
+    });
+});
+
 server.listen(port, () => {
     console.log(`server started at port ${port}`)
     db.serialize(() => {
@@ -153,7 +235,19 @@ server.listen(port, () => {
         });
 
         db.run(db_access.createProductTable, (err) => {
-            if (err) console.log("Error creating PRODUCT table: " + err);
+            if (err) console.log("Error creating product table: " + err);
+        });
+
+        db.run(db_access.createCartTable, (err) => {
+            if (err) console.log("Error creating cart table: " + err);
+        });
+
+        db.run(db_access.createOrdersTable, (err) => {
+            if (err) console.log("Error creating order table: " + err);
+        });
+
+        db.run(db_access.createOrderItemsTable, (err) => {
+            if (err) console.log("Error creating order-item table: " + err);
         });
     })
 })

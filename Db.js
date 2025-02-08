@@ -19,4 +19,40 @@ const createProductTable = `
     )
 `;
 
-module.exports = { db, createUserTable, createProductTable }
+
+const createCartTable = `
+    CREATE TABLE IF NOT EXISTS CART (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        USER_ID INTEGER NOT NULL,
+        PRODUCT_ID INTEGER NOT NULL,
+        QUANTITY INTEGER NOT NULL,
+        FOREIGN KEY (USER_ID) REFERENCES USER(ID),
+        FOREIGN KEY (PRODUCT_ID) REFERENCES PRODUCT(ID)
+    )
+`;
+
+const createOrdersTable = `
+    CREATE TABLE IF NOT EXISTS ORDERS (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        USER_ID INTEGER NOT NULL,
+        TOTAL_PRICE REAL NOT NULL,
+        STATUS TEXT NOT NULL DEFAULT 'Pending',
+        CREATED_AT DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (USER_ID) REFERENCES USER(ID)
+    )
+`;
+
+const createOrderItemsTable = `
+    CREATE TABLE IF NOT EXISTS ORDER_ITEMS (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        ORDER_ID INTEGER NOT NULL,
+        PRODUCT_ID INTEGER NOT NULL,
+        QUANTITY INTEGER NOT NULL,
+        PRICE REAL NOT NULL,
+        FOREIGN KEY (ORDER_ID) REFERENCES ORDERS(ID),
+        FOREIGN KEY (PRODUCT_ID) REFERENCES PRODUCT(ID)
+    )
+`;
+
+
+module.exports = { db, createUserTable, createProductTable, createCartTable, createOrdersTable, createOrderItemsTable }
