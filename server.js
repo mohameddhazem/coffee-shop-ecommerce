@@ -51,7 +51,7 @@ server.post('/user/login', (req, res) => {
                     secure: true,
                     expiresIn: '1h'
                 })
-                return res.status(200).json({ id: userID, admin: isAdmin })
+                return res.status(200).json({ id: userID, admin: isAdmin, token })
             }
         })
     })
@@ -76,6 +76,73 @@ server.post(`/user/register`, (req, res) => {
     })
 })
 
+// Add a new product (Admin only)
+server.post('/product', verifyToken, async (req, res) => {
+    if (!req.userDetails.isAdmin)
+        return res.status(403).send('Admin access required');
+    const { name, description, price, stock, image } = req.body;
+    const query = `INSERT INTO PRODUCT (NAME, DESCRIPTION, PRICE, STOCK, IMAGE) VALUES (?, ?, ?, ?, ?)`;
+    db.run(query, [name, description, price, stock, image], (err) => {
+        if (err)
+            return res.status(500).send('Error adding products: ' + err.message);
+        return res.status(201).send("Product added successfully");
+    });
+});
+
+
+// Update product (Admin Only)
+server.put('/product/:id', verifyToken, (req, res) => {
+    if (!req.userDetails.isAdmin)
+        return res.status(403).send('Admin access required.');
+
+    const { name, description, price, stock, image } = req.body;
+    const productId = req.params.id;
+
+    const query = `UPDATE PRODUCT SET NAME = ?, DESCRIPTION = ?, PRICE = ?, STOCK = ?, IMAGE = ? WHERE ID = ?`;
+    db.run(query, [name, description, price, stock, image, productId], function (err) {
+        if (err)
+            return res.status(500).send('Error updating product: ' + err.message);
+        if (this.changes === 0)
+            return res.status(404).send('Product not found.');
+        res.status(200).send('Product updated successfully.');
+    });
+});
+
+// Delete product (Admin Only)
+server.delete('/product/:id', verifyToken, (req, res) => {
+    if (!req.userDetails.isAdmin)
+        return res.status(403).send('Admin access required.');
+
+    const productId = req.params.id;
+
+    db.run(`DELETE FROM PRODUCT WHERE ID = ?`, [productId], function (err) {
+        if (err) return res.status(500).send('Error deleting product: ' + err.message);
+        if (this.changes === 0) return res.status(404).send('Product not found.');
+        res.status(200).send('Product deleted successfully.');
+    });
+});
+
+// Get all products
+server.get('/products', (req, res) => {
+    db.all(`SELECT * FROM PRODUCT`, [], (err, rows) => {
+        if (err)
+            return res.status(500).send('Error fetching products: ' + err.message);
+        res.status(200).json(rows);
+    });
+});
+
+// Get product details by ID
+server.get('/products/:id', (req, res) => {
+    const productId = req.params.id;
+
+    db.get(`SELECT * FROM PRODUCT WHERE ID = ?`, [productId], (err, row) => {
+        if (err)
+            return res.status(500).send('Error fetching product: ' + err.message);
+        if (!row)
+            return res.status(404).send('Product not found.');
+        res.status(200).json(row);
+    });
+});
 
 server.listen(port, () => {
     console.log(`server started at port ${port}`)
@@ -84,8 +151,9 @@ server.listen(port, () => {
             if (err)
                 console.log("error creating user table " + err)
         });
+
+        db.run(db_access.createProductTable, (err) => {
+            if (err) console.log("Error creating PRODUCT table: " + err);
+        });
     })
-
-
-
 })

@@ -8,4 +8,15 @@ EMAIL TEXT UNIQUE NOT NULL,
 PASSWORD TEXT NOT NULL,
 ISADMIN INT)`
 
-module.exports = { db, createUserTable }
+const createProductTable = `
+    CREATE TABLE IF NOT EXISTS PRODUCT (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        NAME TEXT NOT NULL,
+        DESCRIPTION TEXT,
+        PRICE REAL NOT NULL,
+        STOCK INTEGER NOT NULL,
+        IMAGE TEXT
+    )
+`;
+
+module.exports = { db, createUserTable, createProductTable }
