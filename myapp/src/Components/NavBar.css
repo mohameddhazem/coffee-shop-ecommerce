@@ -1,0 +1,25 @@
+nav {
+    display: flex;
+    background-color: black;
+    color: white;
+    justify-content: space-between;
+    align-items: center;
+}
+
+li {
+    display: inline;
+    margin: 8px;
+    cursor: pointer;
+
+}
+
+.logo {
+    cursor: pointer;
+    text-align: center;
+    margin: 8px;
+}
+
+li:hover {
+    background-color: aqua;
+    color: blue;
+}
