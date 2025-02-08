@@ -226,6 +226,89 @@ server.get('/cart', verifyToken, (req, res) => {
     });
 });
 
+// Place an order
+server.post('/order', verifyToken, (req, res) => {
+    const userId = req.userDetails.id;
+
+    // Get all cart items for the user
+    const cartQuery = `
+        SELECT CART.ID AS CART_ID, PRODUCT.ID AS PRODUCT_ID, PRODUCT.PRICE, CART.QUANTITY
+        FROM CART
+        JOIN PRODUCT ON CART.PRODUCT_ID = PRODUCT.ID
+        WHERE CART.USER_ID = ?
+    `;
+
+    db.all(cartQuery, [userId], (err, cartItems) => {
+        if (err)
+            return res.status(500).send('Error fetching cart items');
+        if (cartItems.length === 0)
+            return res.status(400).send('Cart is empty');
+        console.log(cartItems);
+        // Calculate total price
+        const totalPrice = cartItems.reduce((total, item) => total + (item.QUANTITY * item.PRICE), 0);
+        console.log(totalPrice);
+
+        // Add order to the Orders table
+        const insertOrderQuery = `INSERT INTO ORDERS (USER_ID, TOTAL_PRICE, STATUS) VALUES (?, ?, 'Preparing')`;
+        db.run(insertOrderQuery, [userId, totalPrice], function (err) {
+            if (err)
+                return res.status(500).send('Error placing order');
+
+            const orderId = this.lastID;
+
+            // Move cart items to the Order_Items table
+            const orderItemsQuery = `INSERT INTO ORDER_ITEMS (ORDER_ID, PRODUCT_ID, QUANTITY, PRICE) VALUES (?, ?, ?, ?)`;
+            const q = db.prepare(orderItemsQuery);
+
+            cartItems.forEach(item => {
+                q.run(orderId, item.PRODUCT_ID, item.QUANTITY, item.PRICE);
+            });
+
+            q.finalize();
+
+            // Clear the cart
+            db.run(`DELETE FROM CART WHERE USER_ID = ?`, [userId], err => {
+                if (err)
+                    return res.status(500).send('Error clearing cart');
+                res.status(201).send('Order placed successfully');
+            });
+        });
+    });
+});
+
+// View order history
+server.get('/orders', verifyToken, (req, res) => {
+    const userId = req.userDetails.id;
+
+    const ordersQuery = `
+        SELECT ORDERS.ID AS ORDER_ID, ORDERS.TOTAL_PRICE, ORDERS.STATUS, ORDERS.CREATED_AT
+        FROM ORDERS
+        WHERE ORDERS.USER_ID = ?
+    `;
+    db.all(ordersQuery, [userId], (err, rows) => {
+        if (err)
+            return res.status(500).send('Error fetching orders');
+        res.status(200).json(rows);
+    });
+});
+
+// View all orders (Admin Only)
+server.get('/admin/orders', verifyToken, (req, res) => {
+    if (!req.userDetails.isAdmin)
+        return res.status(403).send('Admin access required');
+
+    const adminOrdersQuery = `
+        SELECT ORDERS.ID AS ORDER_ID, ORDERS.USER_ID, ORDERS.TOTAL_PRICE, ORDERS.STATUS, ORDERS.CREATED_AT
+        FROM ORDERS
+    `;
+    db.all(adminOrdersQuery, [], (err, rows) => {
+        if (err)
+            return res.status(500).send('Error fetching all orders');
+        res.status(200).json(rows);
+    });
+});
+
+
 server.listen(port, () => {
     console.log(`server started at port ${port}`)
     db.serialize(() => {
