@@ -1,13 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Home from "./Home";
 import NavBar from "./NavBar";
 import LoginForm from './LoginForm';
 import RegistrationForm from './Registrationform';
+import ProductList from "./ProductList";
 
 const Main = () => {
     const [page, setPage] = useState('home');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [products, setProducts] = useState([]);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const response = await fetch('http://localhost:555/products');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+                const data = await response.json();
+                setProducts(data);
+            } catch (err) {
+                setError(err.message);
+            }
+        };
+
+        fetchProducts();
+    }, []);
+
 
     const handleLogin = (userData) => {
         console.log('handleLogin called with:', userData);
@@ -41,6 +62,11 @@ const Main = () => {
                 handleLogout={handleLogout}
             />
             {currentPage}
+            <div className="home-container">
+                <h2>Available Products</h2>
+                {error && <p className="error-message">{error}</p>}
+                <ProductList products={products} />
+            </div>
         </div>
     );
 };
