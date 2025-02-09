@@ -1,7 +1,7 @@
 import React from 'react';
 import './ProductList.css';
 
-const ProductList = ({ products }) => {
+const ProductList = ({ products, placeOrder }) => {
     const addToCart = async (productId) => {
         const authToken = localStorage.getItem('authToken'); // Check for token in localStorage
 
@@ -32,15 +32,20 @@ const ProductList = ({ products }) => {
 
 
     return (
-        <div className="products-grid">
-            {products.map((product) => (
-                <div key={product.ID} className="product-card">
-                    <img src={`/images/${product.IMAGE || 'placeholder.jpg'}`} alt={product.NAME} className="product-image" />
-                    <h3>{product.NAME}</h3>
-                    <p>Price: ${product.PRICE}</p>
-                    <button onClick={() => addToCart(product.ID)}>Add to Cart</button>
-                </div>
-            ))}
+        <div>
+            <div className="place-order">
+                <button onClick={placeOrder}>Place Order</button>
+            </div>
+            <div className="products-grid">
+                {products.map((product) => (
+                    <div key={product.ID} className="product-card">
+                        <img src={`/images/${product.IMAGE || 'placeholder.jpg'}`} alt={product.NAME} className="product-image" />
+                        <h3>{product.NAME}</h3>
+                        <p>Price: ${product.PRICE}</p>
+                        <button onClick={() => addToCart(product.ID)}>Add to Cart</button>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };

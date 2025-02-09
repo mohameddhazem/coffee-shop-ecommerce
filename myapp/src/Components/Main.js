@@ -48,6 +48,24 @@ const Main = () => {
         alert('Logged out successfully!');
     };
 
+    const placeOrder = async () => {
+        try {
+            const response = await fetch('http://localhost:555/order', {
+                method: 'POST',
+                credentials: 'include', // Include cookies for authentication
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to place order');
+            }
+
+            alert('Order placed successfully!');
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+
     let currentPage;
     if (page === 'home') currentPage = <Home />;
     else if (page === 'login') currentPage = <LoginForm navigate={setPage} onLogin={handleLogin} />;
@@ -69,7 +87,7 @@ const Main = () => {
             <div className="home-container">
                 <h2>Available Products</h2>
                 {error && <p className="error-message">{error}</p>}
-                <ProductList products={products} />
+                <ProductList products={products} placeOrder={placeOrder} />
             </div>
         </div>
     );
