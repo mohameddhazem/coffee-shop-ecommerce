@@ -15,6 +15,8 @@ const NavBar = ({ navigate, isLoggedIn, isAdmin, handleLogout }) => {
                         </>
                     ) : (
                         <>
+                            {!isAdmin && <li onClick={() => navigate('cart')}>Cart</li>}
+                            {!isAdmin && <li onClick={() => navigate('orders')}>Orders</li>}
                             {isAdmin && <li onClick={() => navigate('admin-home')}>Admin</li>}
                             <li onClick={handleLogout}>Logout</li>
                         </>

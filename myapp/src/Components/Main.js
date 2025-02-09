@@ -4,6 +4,8 @@ import NavBar from "./NavBar";
 import LoginForm from './LoginForm';
 import RegistrationForm from './Registrationform';
 import ProductList from "./ProductList";
+import Cart from "./Cart";
+import Orders from "./Orders";
 
 const Main = () => {
     const [page, setPage] = useState('home');
@@ -50,6 +52,8 @@ const Main = () => {
     if (page === 'home') currentPage = <Home />;
     else if (page === 'login') currentPage = <LoginForm navigate={setPage} onLogin={handleLogin} />;
     else if (page === 'register') currentPage = <RegistrationForm />;
+    else if (page === 'cart') currentPage = <Cart />
+    else if (page === 'orders') currentPage = <Orders />
     else if (page === 'admin-home') currentPage = <div>Welcome, Admin! (Admin Home Page)</div>;
     else currentPage = <div>Page not found</div>;
 

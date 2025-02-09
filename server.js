@@ -149,10 +149,6 @@ server.get('/products/:id', (req, res) => {
 server.post('/cart', verifyToken, (req, res) => {
     const { productId, quantity } = req.body;
     const userId = req.userDetails.id;
-    console.log(productId);
-    console.log(quantity);
-    console.log(userId);
-    console.log(req.body);
 
     // Check if the product already exists in the cart
     const checkQuery = `SELECT * FROM CART WHERE USER_ID = ? AND PRODUCT_ID = ?`;
