@@ -6,6 +6,7 @@ import RegistrationForm from './Registrationform';
 import ProductList from "./ProductList";
 import Cart from "./Cart";
 import Orders from "./Orders";
+import AdminHome from "./AdminHome";
 
 const Main = () => {
     const [page, setPage] = useState('home');
@@ -72,7 +73,7 @@ const Main = () => {
     else if (page === 'register') currentPage = <RegistrationForm />;
     else if (page === 'cart') currentPage = <Cart />
     else if (page === 'orders') currentPage = <Orders />
-    else if (page === 'admin-home') currentPage = <div>Welcome, Admin! (Admin Home Page)</div>;
+    else if (page === 'admin-home') currentPage = <AdminHome />
     else currentPage = <div>Page not found</div>;
 
     return (
